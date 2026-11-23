@@ -38,5 +38,7 @@ export async function registerNotifyWorker() {
     await unregisterOurs().catch(() => {});
     return;
   }
-  await navigator.serviceWorker.register(SW_PATH).catch(() => {});
+  await navigator.serviceWorker
+    .register(SW_PATH, { scope: "/", updateViaCache: "none" })
+    .catch(() => {});
 }

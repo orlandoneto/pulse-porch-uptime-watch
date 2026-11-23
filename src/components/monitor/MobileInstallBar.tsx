@@ -1,19 +1,19 @@
 import { Copy, Download, Share2, X } from "lucide-react";
-import { useState, type MouseEvent, type PointerEvent } from "react";
+import { useState, type MouseEvent } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
   copyAppLink,
+  installAppFromButton,
   isAndroidDevice,
   isIosDevice,
   isStandaloneApp,
-  promptInstall,
   shareAppLink,
   useCanInstall,
   useIsMobile,
 } from "@/lib/monitor/install";
 
-/** Barra fixa no celular: instalar como app (some se já estiver instalado). */
+/** Barra no celular: botão = mesmo fluxo do Chrome ⋮ → Instalar app (quando o SO permite). */
 export function MobileInstallBar() {
   const isMobile = useIsMobile();
   const canInstall = useCanInstall();
@@ -26,36 +26,35 @@ export function MobileInstallBar() {
 
   if (!isMobile || isStandaloneApp() || dismissed) return null;
 
-  const openSheet = (e?: MouseEvent | PointerEvent) => {
-    e?.preventDefault();
-    e?.stopPropagation();
-    setOpen(true);
-  };
-
-  const runNativeInstall = async () => {
+  const onInstallClick = async (e: MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (busy) return;
     setBusy(true);
-    const result = await promptInstall();
+
+    // Android/Chrome: dispara o diálogo nativo (ícone na home) — equivalente a ⋮ → Instalar app
+    if (!isIosDevice()) {
+      const result = await installAppFromButton();
+      if (result === "accepted") {
+        toast.success("App instalado! Use o ícone OnWatch na tela inicial.");
+        setBusy(false);
+        return;
+      }
+      if (result === "dismissed") {
+        toast.message("Instalação cancelada");
+        setBusy(false);
+        return;
+      }
+    }
+
+    // iPhone, ou Chrome ainda não liberou o prompt → painel com o caminho certo
+    setOpen(true);
     setBusy(false);
-    if (result === "accepted") {
-      toast.success("Instalado! Abra o OnWatch pelo ícone na tela inicial.");
-      setOpen(false);
-      return;
-    }
-    if (result === "dismissed") {
-      toast.message("Instalação cancelada", { description: "Toque de novo em Instalar agora se quiser." });
-      return;
-    }
-    if (result === "unavailable") {
-      toast.message("Use o menu do navegador", {
-        description: isIosDevice()
-          ? "Safari → Compartilhar → Adicionar à Tela de Início"
-          : "Chrome → ⋮ → Instalar app / Adicionar à tela inicial",
+    if (!isIosDevice() && !canInstall) {
+      toast.message("Abra pelo menu do Chrome", {
+        description: "⋮ → Instalar app (ou Adicionar à tela inicial)",
       });
-      return;
     }
-    toast.error("Não foi possível abrir o instalador", {
-      description: "Siga os passos abaixo nesta tela.",
-    });
   };
 
   const onShare = async () => {
@@ -69,9 +68,9 @@ export function MobileInstallBar() {
     else toast.error("Não foi possível copiar o link");
   };
 
-  const dismiss = (e?: MouseEvent | PointerEvent) => {
-    e?.preventDefault();
-    e?.stopPropagation();
+  const dismiss = (e: MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
     sessionStorage.setItem("onwatch-install-dismissed", "1");
     setDismissed(true);
     setOpen(false);
@@ -83,11 +82,12 @@ export function MobileInstallBar() {
         <div className="mx-auto flex max-w-lg items-center gap-2 rounded-xl border border-border bg-surface p-2 shadow-lg">
           <button
             type="button"
-            className="inline-flex h-12 min-h-12 flex-1 cursor-pointer items-center justify-center gap-2 rounded-md bg-primary px-4 text-sm font-semibold text-primary-foreground shadow active:scale-[0.98]"
-            onClick={openSheet}
+            disabled={busy}
+            className="inline-flex h-12 min-h-12 flex-1 cursor-pointer items-center justify-center gap-2 rounded-md bg-primary px-4 text-sm font-semibold text-primary-foreground shadow active:scale-[0.98] disabled:opacity-70"
+            onClick={(e) => void onInstallClick(e)}
           >
             <Download className="size-4 shrink-0" aria-hidden />
-            Instalar como app
+            {busy ? "Abrindo instalador…" : "Instalar app"}
           </button>
           <button
             type="button"
@@ -111,66 +111,61 @@ export function MobileInstallBar() {
           <div
             className="w-full max-w-lg rounded-t-2xl border border-border bg-background p-5 pb-[calc(1.25rem+env(safe-area-inset-bottom))] shadow-xl sm:rounded-xl"
             onClick={(e) => e.stopPropagation()}
-            onPointerDown={(e) => e.stopPropagation()}
           >
             <div className="mx-auto mb-3 h-1 w-10 rounded-full bg-muted sm:hidden" />
             <h2 id="install-guide-title" className="text-lg font-semibold">
-              Instalar o OnWatch
+              Colocar o ícone na tela inicial
             </h2>
             <p className="mt-1 text-sm text-muted-foreground">
-              Depois ele abre em tela cheia, sem a barra do navegador.
+              {isIosDevice()
+                ? "No iPhone o Safari controla a instalação. Siga os passos:"
+                : "Se o Chrome não abriu o instalador sozinho, use o menu:"}
             </p>
-
-            {canInstall ? (
-              <button
-                type="button"
-                disabled={busy}
-                className="mt-4 inline-flex h-12 w-full cursor-pointer items-center justify-center gap-2 rounded-md bg-primary text-sm font-semibold text-primary-foreground shadow disabled:opacity-60"
-                onClick={() => void runNativeInstall()}
-              >
-                <Download className="size-4" />
-                {busy ? "Abrindo instalador…" : "Instalar agora"}
-              </button>
-            ) : null}
 
             <ol className="mt-4 list-decimal space-y-2.5 pl-5 text-sm text-foreground">
               {isIosDevice() ? (
                 <>
                   <li>
-                    Abra este site no <strong>Safari</strong> (não no Chrome).
+                    Abra no <strong>Safari</strong>.
                   </li>
                   <li>
-                    Toque em <strong>Compartilhar</strong> <span aria-hidden>􀈂</span> (quadrado com seta para cima).
+                    Toque em <strong>Compartilhar</strong> (quadrado com seta).
                   </li>
                   <li>
-                    Role a lista e toque em <strong>Adicionar à Tela de Início</strong>.
-                  </li>
-                  <li>
-                    Toque em <strong>Adicionar</strong>.
+                    <strong>Adicionar à Tela de Início</strong> → <strong>Adicionar</strong>.
                   </li>
                 </>
               ) : isAndroidDevice() ? (
                 <>
                   <li>
-                    Toque em <strong>⋮</strong> no canto superior direito do Chrome.
+                    Toque em <strong>⋮</strong> (canto superior direito).
                   </li>
                   <li>
-                    Escolha <strong>Instalar app</strong> ou <strong>Adicionar à tela inicial</strong>.
+                    Toque em <strong>Instalar app</strong> ou <strong>Adicionar à tela inicial</strong>.
                   </li>
                   <li>
-                    Confirme e abra o ícone <strong>OnWatch</strong> na tela inicial.
+                    Confirme — o ícone <strong>OnWatch</strong> aparece na home.
                   </li>
                 </>
               ) : (
                 <>
                   <li>
-                    No menu do navegador, escolha <strong>Instalar app</strong> / <strong>Adicionar à tela
-                    inicial</strong>.
+                    Menu do navegador → <strong>Instalar app</strong>.
                   </li>
-                  <li>Abra pelo ícone OnWatch na tela inicial.</li>
+                  <li>Abra pelo ícone na tela inicial.</li>
                 </>
               )}
             </ol>
+
+            {!isIosDevice() && canInstall ? (
+              <button
+                type="button"
+                className="mt-4 inline-flex h-12 w-full cursor-pointer items-center justify-center gap-2 rounded-md bg-primary text-sm font-semibold text-primary-foreground"
+                onClick={(e) => void onInstallClick(e)}
+              >
+                <Download className="size-4" /> Tentar Instalar app de novo
+              </button>
+            ) : null}
 
             <div className="mt-4 grid grid-cols-2 gap-2">
               <Button type="button" variant="outline" className="h-11" onClick={() => void onShare()}>

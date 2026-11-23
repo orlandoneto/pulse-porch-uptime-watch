@@ -6,11 +6,13 @@ interface BeforeInstallPromptEvent extends Event {
 }
 
 let deferred: BeforeInstallPromptEvent | null = null;
+let listening = false;
 const listeners = new Set<() => void>();
 const emit = () => listeners.forEach((l) => l());
 
 export function listenForInstallPrompt() {
-  if (typeof window === "undefined") return;
+  if (typeof window === "undefined" || listening) return;
+  listening = true;
   window.addEventListener("beforeinstallprompt", (e) => {
     e.preventDefault();
     deferred = e as BeforeInstallPromptEvent;
@@ -35,8 +37,33 @@ export function useCanInstall() {
 
 export type PromptInstallResult = "accepted" | "dismissed" | "unavailable" | "error";
 
-/** Dispara o diálogo nativo do Chrome/Edge. Retorna o resultado real. */
+/** Espera o Chrome disparar beforeinstallprompt (até timeoutMs). */
+export function waitForInstallPrompt(timeoutMs = 2500): Promise<boolean> {
+  if (deferred) return Promise.resolve(true);
+  if (typeof window === "undefined") return Promise.resolve(false);
+  listenForInstallPrompt();
+  return new Promise((resolve) => {
+    const start = Date.now();
+    const tick = () => {
+      if (deferred) {
+        resolve(true);
+        return;
+      }
+      if (Date.now() - start >= timeoutMs) {
+        resolve(false);
+        return;
+      }
+      window.setTimeout(tick, 100);
+    };
+    tick();
+  });
+}
+
+/** Dispara o mesmo diálogo do menu ⋮ → Instalar app (Chrome/Edge Android). */
 export async function promptInstall(): Promise<PromptInstallResult> {
+  if (!deferred) {
+    await waitForInstallPrompt(1500);
+  }
   if (!deferred) return "unavailable";
   const event = deferred;
   try {
@@ -50,6 +77,18 @@ export async function promptInstall(): Promise<PromptInstallResult> {
     emit();
     return "error";
   }
+}
+
+/**
+ * Clique do botão "Instalar app":
+ * 1) tenta o instalador nativo (ícone na home)
+ * 2) se o navegador não oferecer, o caller mostra o guia
+ */
+export async function installAppFromButton(): Promise<PromptInstallResult> {
+  listenForInstallPrompt();
+  if (isIosDevice()) return "unavailable";
+  await waitForInstallPrompt(2800);
+  return promptInstall();
 }
 
 /** Já rodando como app na tela inicial (standalone). */
@@ -70,7 +109,6 @@ export function isAndroidDevice(): boolean {
   return /Android/i.test(navigator.userAgent);
 }
 
-/** Celular / tablet — botão de instalar só nesses aparelhos. */
 export function isMobileDevice(): boolean {
   if (typeof window === "undefined") return false;
   if (isIosDevice() || isAndroidDevice()) return true;
