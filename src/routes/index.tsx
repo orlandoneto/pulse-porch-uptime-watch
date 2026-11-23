@@ -10,7 +10,7 @@ import { ServiceDialog } from "@/components/monitor/ServiceDialog";
 import { useNow } from "@/components/monitor/useNow";
 import { updateSettings } from "@/lib/monitor/actions";
 import { checkAll } from "@/lib/monitor/engine";
-import { isStandaloneApp, promptInstall, useCanInstall } from "@/lib/monitor/install";
+import { isStandaloneApp, promptInstall, useCanInstall, useIsMobile } from "@/lib/monitor/install";
 import { averageMs, visibleServices } from "@/lib/monitor/logic";
 import { pushSupported, requestPushPermission } from "@/lib/monitor/notify";
 import { useAppState, useCurrentProfile } from "@/lib/monitor/store";
@@ -58,7 +58,9 @@ function Dashboard() {
 
   const showPushBanner = pushSupported() && !state.settings.pushEnabled;
   const canInstall = useCanInstall();
-  const showInstallBanner = !isStandaloneApp();
+  const isMobile = useIsMobile();
+  // Celular: barra fixa "Instalar como app". Desktop: este banner se o Chrome oferecer instalação.
+  const showInstallBanner = !isStandaloneApp() && !isMobile && canInstall;
 
   const enablePush = async () => {
     const perm = await requestPushPermission();

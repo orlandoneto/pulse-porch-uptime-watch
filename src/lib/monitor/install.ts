@@ -57,3 +57,23 @@ export function isAndroidDevice(): boolean {
   if (typeof navigator === "undefined") return false;
   return /Android/i.test(navigator.userAgent);
 }
+
+/** Celular / tablet — botão de instalar só nesses aparelhos. */
+export function isMobileDevice(): boolean {
+  if (typeof window === "undefined") return false;
+  if (isIosDevice() || isAndroidDevice()) return true;
+  return window.matchMedia("(max-width: 768px) and (pointer: coarse)").matches;
+}
+
+export function useIsMobile(): boolean {
+  return useSyncExternalStore(
+    (onChange) => {
+      if (typeof window === "undefined") return () => {};
+      const mq = window.matchMedia("(max-width: 768px)");
+      mq.addEventListener("change", onChange);
+      return () => mq.removeEventListener("change", onChange);
+    },
+    () => isMobileDevice(),
+    () => false,
+  );
+}

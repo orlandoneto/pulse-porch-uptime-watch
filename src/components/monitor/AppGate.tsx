@@ -16,6 +16,7 @@ import { useAppState, useCurrentProfile, useHydrated } from "@/lib/monitor/store
 import type { Profile } from "@/lib/monitor/types";
 import { cn } from "@/lib/utils";
 import { Logo } from "./Logo";
+import { MobileInstallBar } from "./MobileInstallBar";
 import { ProfileDialog } from "./ProfileDialog";
 
 export function AppGate({ children }: { children: ReactNode }) {
@@ -33,9 +34,10 @@ export function AppGate({ children }: { children: ReactNode }) {
   if (!noAreas && !me) return <LoadingShell />;
 
   return (
-    <div className="min-h-screen pb-24 md:pb-10">
+    <div className="min-h-screen pb-36 md:pb-10">
       <Header />
       <main className="mx-auto max-w-6xl px-4 pt-6 sm:px-6">{noAreas ? <NoAreas /> : children}</main>
+      <MobileInstallBar />
       <MobileNav />
     </div>
   );
