@@ -1,5 +1,5 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { Bell, Plus, RefreshCw, Search } from "lucide-react";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { Bell, Plus, RefreshCw, Search, Smartphone } from "lucide-react";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -10,6 +10,7 @@ import { ServiceDialog } from "@/components/monitor/ServiceDialog";
 import { useNow } from "@/components/monitor/useNow";
 import { updateSettings } from "@/lib/monitor/actions";
 import { checkAll } from "@/lib/monitor/engine";
+import { isStandaloneApp, promptInstall, useCanInstall } from "@/lib/monitor/install";
 import { averageMs, visibleServices } from "@/lib/monitor/logic";
 import { pushSupported, requestPushPermission } from "@/lib/monitor/notify";
 import { useAppState, useCurrentProfile } from "@/lib/monitor/store";
@@ -56,6 +57,8 @@ function Dashboard() {
     .sort((a, b) => rank(statusOf(a)) - rank(statusOf(b)) || a.name.localeCompare(b.name));
 
   const showPushBanner = pushSupported() && !state.settings.pushEnabled;
+  const canInstall = useCanInstall();
+  const showInstallBanner = !isStandaloneApp();
 
   const enablePush = async () => {
     const perm = await requestPushPermission();
@@ -110,6 +113,31 @@ function Dashboard() {
         <Stat label="Fora do ar" value={downCount} tone={downCount > 0 ? "down" : undefined} />
         <Stat label="Resposta média" value={avg ?? "—"} unit={avg != null ? "ms" : undefined} />
       </section>
+
+      {showInstallBanner && (
+        <div className="panel flex flex-wrap items-center gap-3 p-4">
+          <span className="grid size-9 place-items-center rounded-md bg-primary/10 text-primary">
+            <Smartphone className="size-4" />
+          </span>
+          <div className="min-w-0 flex-1">
+            <div className="text-sm font-medium">Instalar na tela inicial</div>
+            <div className="text-xs text-muted-foreground">
+              {canInstall
+                ? "Toque em Instalar para adicionar o OnWatch como app."
+                : "No iPhone use o Safari → Compartilhar → Adicionar à Tela de Início. No Android: Chrome → ⋮ → Instalar app."}
+            </div>
+          </div>
+          {canInstall ? (
+            <Button size="sm" onClick={() => void promptInstall()}>
+              Instalar
+            </Button>
+          ) : (
+            <Button size="sm" variant="outline" asChild>
+              <Link to="/ajustes">Ver como</Link>
+            </Button>
+          )}
+        </div>
+      )}
 
       {showPushBanner && (
         <div className="panel flex flex-wrap items-center gap-3 p-4">

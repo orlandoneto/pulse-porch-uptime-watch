@@ -8,7 +8,13 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { buildFullBackup, downloadJson, importFile, updateSettings } from "@/lib/monitor/actions";
-import { promptInstall, useCanInstall } from "@/lib/monitor/install";
+import {
+  isAndroidDevice,
+  isIosDevice,
+  isStandaloneApp,
+  promptInstall,
+  useCanInstall,
+} from "@/lib/monitor/install";
 import { emailConfigured, pushSupported, requestPushPermission, sendEmail, showPush } from "@/lib/monitor/notify";
 import { useAppState, useCurrentProfile } from "@/lib/monitor/store";
 
@@ -159,19 +165,63 @@ function SettingsPage() {
       </Section>
 
       <Section icon={<Smartphone />} title="Instalar no celular">
-        {canInstall ? (
-          <Button size="sm" onClick={() => void promptInstall()}>
-            Instalar OnWatch
-          </Button>
+        {isStandaloneApp() ? (
+          <p className="text-sm text-muted-foreground">OnWatch já está instalado neste aparelho.</p>
         ) : (
-          <ul className="space-y-1.5 text-sm text-muted-foreground">
-            <li>
-              <span className="text-foreground">Android (Chrome):</span> menu ⋮ → Instalar app.
-            </li>
-            <li>
-              <span className="text-foreground">iPhone (Safari):</span> botão Compartilhar → Adicionar à Tela de Início.
-            </li>
-          </ul>
+          <div className="space-y-4">
+            {canInstall ? (
+              <Button size="sm" onClick={() => void promptInstall()}>
+                Instalar OnWatch
+              </Button>
+            ) : null}
+            <ol className="list-decimal space-y-2 pl-5 text-sm text-muted-foreground">
+              {isIosDevice() ? (
+                <>
+                  <li>
+                    Abra este site no <span className="font-medium text-foreground">Safari</span> (não no Chrome).
+                  </li>
+                  <li>
+                    Toque em <span className="font-medium text-foreground">Compartilhar</span> (quadrado com seta para cima).
+                  </li>
+                  <li>
+                    Role e toque em <span className="font-medium text-foreground">Adicionar à Tela de Início</span>.
+                  </li>
+                  <li>
+                    Confirme em <span className="font-medium text-foreground">Adicionar</span>.
+                  </li>
+                </>
+              ) : isAndroidDevice() ? (
+                <>
+                  <li>
+                    Abra no <span className="font-medium text-foreground">Chrome</span>.
+                  </li>
+                  <li>
+                    Toque em <span className="font-medium text-foreground">⋮</span> (canto superior direito).
+                  </li>
+                  <li>
+                    Escolha <span className="font-medium text-foreground">Instalar app</span> ou{" "}
+                    <span className="font-medium text-foreground">Adicionar à tela inicial</span>.
+                  </li>
+                  {canInstall ? (
+                    <li>Ou use o botão Instalar OnWatch acima.</li>
+                  ) : (
+                    <li>Se não aparecer, atualize a página e tente de novo em alguns segundos.</li>
+                  )}
+                </>
+              ) : (
+                <>
+                  <li>
+                    <span className="font-medium text-foreground">Android (Chrome):</span> menu ⋮ → Instalar app /
+                    Adicionar à tela inicial.
+                  </li>
+                  <li>
+                    <span className="font-medium text-foreground">iPhone:</span> abra no Safari → Compartilhar →
+                    Adicionar à Tela de Início.
+                  </li>
+                </>
+              )}
+            </ol>
+          </div>
         )}
       </Section>
 

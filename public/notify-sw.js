@@ -1,6 +1,11 @@
-// Service worker apenas para notificações. Não faz cache de nada.
+// Service worker: notificações + critério de PWA (Chrome exige fetch handler).
 self.addEventListener("install", () => self.skipWaiting());
 self.addEventListener("activate", (event) => event.waitUntil(self.clients.claim()));
+
+// Rede pura — sem cache. Só existe para o Chrome considerar o app instalável.
+self.addEventListener("fetch", (event) => {
+  event.respondWith(fetch(event.request));
+});
 
 self.addEventListener("notificationclick", (event) => {
   event.notification.close();

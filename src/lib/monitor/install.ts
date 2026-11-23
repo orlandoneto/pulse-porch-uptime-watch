@@ -39,3 +39,21 @@ export async function promptInstall() {
   deferred = null;
   emit();
 }
+
+/** Já rodando como app na tela inicial (standalone). */
+export function isStandaloneApp(): boolean {
+  if (typeof window === "undefined") return false;
+  const mq = window.matchMedia("(display-mode: standalone)").matches;
+  const ios = "standalone" in navigator && Boolean((navigator as Navigator & { standalone?: boolean }).standalone);
+  return mq || ios;
+}
+
+export function isIosDevice(): boolean {
+  if (typeof navigator === "undefined") return false;
+  return /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+}
+
+export function isAndroidDevice(): boolean {
+  if (typeof navigator === "undefined") return false;
+  return /Android/i.test(navigator.userAgent);
+}
