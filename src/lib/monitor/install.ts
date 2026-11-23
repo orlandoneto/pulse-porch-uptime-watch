@@ -37,7 +37,6 @@ export function useCanInstall() {
 
 export type PromptInstallResult = "accepted" | "dismissed" | "unavailable" | "error";
 
-/** Espera o Chrome disparar beforeinstallprompt (até timeoutMs). */
 export function waitForInstallPrompt(timeoutMs = 2500): Promise<boolean> {
   if (deferred) return Promise.resolve(true);
   if (typeof window === "undefined") return Promise.resolve(false);
@@ -53,17 +52,15 @@ export function waitForInstallPrompt(timeoutMs = 2500): Promise<boolean> {
         resolve(false);
         return;
       }
-      window.setTimeout(tick, 100);
+      window.setTimeout(tick, 80);
     };
     tick();
   });
 }
 
-/** Dispara o mesmo diálogo do menu ⋮ → Instalar app (Chrome/Edge Android). */
+/** Diálogo nativo do Chrome: Instalar app → ícone na home. */
 export async function promptInstall(): Promise<PromptInstallResult> {
-  if (!deferred) {
-    await waitForInstallPrompt(1500);
-  }
+  if (!deferred) await waitForInstallPrompt(2000);
   if (!deferred) return "unavailable";
   const event = deferred;
   try {
@@ -79,24 +76,36 @@ export async function promptInstall(): Promise<PromptInstallResult> {
   }
 }
 
-/**
- * Clique do botão "Instalar app":
- * 1) tenta o instalador nativo (ícone na home)
- * 2) se o navegador não oferecer, o caller mostra o guia
- */
 export async function installAppFromButton(): Promise<PromptInstallResult> {
   listenForInstallPrompt();
   if (isIosDevice()) return "unavailable";
-  await waitForInstallPrompt(2800);
+  await waitForInstallPrompt(3000);
   return promptInstall();
 }
 
-/** Já rodando como app na tela inicial (standalone). */
 export function isStandaloneApp(): boolean {
   if (typeof window === "undefined") return false;
   const mq = window.matchMedia("(display-mode: standalone)").matches;
   const ios = "standalone" in navigator && Boolean((navigator as Navigator & { standalone?: boolean }).standalone);
   return mq || ios;
+}
+
+export function useIsStandalone(): boolean {
+  return useSyncExternalStore(
+    (onChange) => {
+      if (typeof window === "undefined") return () => {};
+      const mq = window.matchMedia("(display-mode: standalone)");
+      const on = () => onChange();
+      mq.addEventListener("change", on);
+      window.addEventListener("appinstalled", on);
+      return () => {
+        mq.removeEventListener("change", on);
+        window.removeEventListener("appinstalled", on);
+      };
+    },
+    () => isStandaloneApp(),
+    () => false,
+  );
 }
 
 export function isIosDevice(): boolean {
@@ -122,37 +131,9 @@ export function useIsMobile(): boolean {
       const mq = window.matchMedia("(max-width: 768px)");
       const on = () => onChange();
       mq.addEventListener("change", on);
-      window.addEventListener("orientationchange", on);
-      return () => {
-        mq.removeEventListener("change", on);
-        window.removeEventListener("orientationchange", on);
-      };
+      return () => mq.removeEventListener("change", on);
     },
     () => isMobileDevice(),
     () => false,
   );
-}
-
-export async function shareAppLink(): Promise<boolean> {
-  if (typeof navigator === "undefined" || !navigator.share) return false;
-  try {
-    await navigator.share({
-      title: "OnWatch",
-      text: "Monitor de sites — instale na tela inicial",
-      url: window.location.origin,
-    });
-    return true;
-  } catch {
-    return false;
-  }
-}
-
-export async function copyAppLink(): Promise<boolean> {
-  if (typeof navigator === "undefined" || !navigator.clipboard) return false;
-  try {
-    await navigator.clipboard.writeText(window.location.origin);
-    return true;
-  } catch {
-    return false;
-  }
 }

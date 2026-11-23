@@ -16,7 +16,7 @@ import { useAppState, useCurrentProfile, useHydrated } from "@/lib/monitor/store
 import type { Profile } from "@/lib/monitor/types";
 import { cn } from "@/lib/utils";
 import { Logo } from "./Logo";
-import { MobileInstallBar } from "./MobileInstallBar";
+import { HeaderInstallButton, InstallTopBanner, MobileInstallBar } from "./MobileInstallBar";
 import { ProfileDialog } from "./ProfileDialog";
 
 export function AppGate({ children }: { children: ReactNode }) {
@@ -34,8 +34,9 @@ export function AppGate({ children }: { children: ReactNode }) {
   if (!noAreas && !me) return <LoadingShell />;
 
   return (
-    <div className="min-h-screen pb-36 md:pb-10">
+    <div className="min-h-screen pb-40 md:pb-28">
       <Header />
+      <InstallTopBanner />
       <main className="mx-auto max-w-6xl px-4 pt-6 sm:px-6">{noAreas ? <NoAreas /> : children}</main>
       <MobileInstallBar />
       <MobileNav />
@@ -46,7 +47,7 @@ export function AppGate({ children }: { children: ReactNode }) {
 function Header() {
   return (
     <header className="sticky top-0 z-30 border-b border-border bg-background/85 pt-[env(safe-area-inset-top)] backdrop-blur">
-      <div className="mx-auto flex h-14 max-w-6xl items-center gap-6 px-4 sm:px-6">
+      <div className="mx-auto flex h-14 max-w-6xl items-center gap-3 px-4 sm:px-6">
         <Link to="/">
           <Logo />
         </Link>
@@ -54,6 +55,7 @@ function Header() {
           <NavLink to="/" icon={<LayoutGrid />} label="Painel" />
           <NavLink to="/ajustes" icon={<Settings2 />} label="Ajustes" />
         </nav>
+        <HeaderInstallButton />
       </div>
       <AreaBar />
     </header>

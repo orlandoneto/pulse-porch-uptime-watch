@@ -1,175 +1,102 @@
-import { Download, Smartphone, X } from "lucide-react";
+import { Download } from "lucide-react";
 import { useState, type MouseEvent } from "react";
 import { toast } from "sonner";
-import {
-  installAppFromButton,
-  isAndroidDevice,
-  isIosDevice,
-  isStandaloneApp,
-  useIsMobile,
-} from "@/lib/monitor/install";
+import { installAppFromButton, isIosDevice, useIsStandalone } from "@/lib/monitor/install";
 
-/**
- * Só instalação — sem compartilhar / copiar link.
- * Android Chrome: diálogo nativo (= ⋮ → Instalar app → ícone na home).
- * iPhone: passos do Safari (Apple não permite instalar por botão).
- */
-export function MobileInstallBar() {
-  const isMobile = useIsMobile();
-  const [dismissed, setDismissed] = useState(() => {
-    if (typeof window === "undefined") return false;
-    return sessionStorage.getItem("onwatch-install-dismissed") === "1";
-  });
-  const [open, setOpen] = useState(false);
-  const [busy, setBusy] = useState(false);
-
-  if (!isMobile || isStandaloneApp() || dismissed) return null;
-
-  const onInstallClick = async (e: MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (busy) return;
-    setBusy(true);
-
-    if (isIosDevice()) {
-      setOpen(true);
-      setBusy(false);
-      return;
-    }
-
-    const result = await installAppFromButton();
+async function runInstall(setBusy: (v: boolean) => void) {
+  setBusy(true);
+  if (isIosDevice()) {
+    toast.message("iPhone: abra no Safari → seta para cima → Adicionar à Tela de Início");
     setBusy(false);
+    return;
+  }
+  toast.message("Abrindo instalador…");
+  const result = await installAppFromButton();
+  setBusy(false);
+  if (result === "accepted") {
+    toast.success("Pronto! Ícone OnWatch na tela inicial.");
+    return;
+  }
+  if (result === "dismissed") {
+    toast.message("Cancelado — toque de novo em INSTALAR APP");
+    return;
+  }
+  toast.error("Toque em ⋮ no Chrome → Instalar app", { duration: 10000 });
+}
 
-    if (result === "accepted") {
-      toast.success("Instalado! Abra o ícone OnWatch na tela inicial.");
-      setOpen(false);
-      return;
-    }
-    if (result === "dismissed") {
-      toast.message("Instalação cancelada — toque de novo em Instalar app");
-      return;
-    }
-
-    setOpen(true);
-    toast.message("Instalar pelo Chrome", {
-      description: "Menu ⋮ → Instalar app (não Compartilhar)",
-    });
-  };
-
-  const dismiss = (e: MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    sessionStorage.setItem("onwatch-install-dismissed", "1");
-    setDismissed(true);
-    setOpen(false);
-  };
+/** Faixa no topo: impossível não ver. */
+export function InstallTopBanner() {
+  const installed = useIsStandalone();
+  const [busy, setBusy] = useState(false);
+  if (installed) return null;
 
   return (
-    <>
-      <div className="fixed inset-x-0 bottom-[calc(3.75rem+env(safe-area-inset-bottom))] z-[60] px-3 md:hidden">
-        <div className="mx-auto flex max-w-lg items-center gap-2 rounded-xl border border-border bg-surface p-2 shadow-lg">
-          <button
-            type="button"
-            disabled={busy}
-            className="inline-flex h-12 min-h-12 flex-1 cursor-pointer items-center justify-center gap-2 rounded-md bg-primary px-4 text-sm font-semibold text-primary-foreground shadow active:scale-[0.98] disabled:opacity-70"
-            onClick={(e) => void onInstallClick(e)}
-          >
-            <Download className="size-4 shrink-0" aria-hidden />
-            {busy ? "Instalando…" : "Instalar app"}
-          </button>
-          <button
-            type="button"
-            className="inline-flex size-12 shrink-0 cursor-pointer items-center justify-center rounded-md text-muted-foreground active:bg-accent"
-            aria-label="Fechar"
-            onClick={dismiss}
-          >
-            <X className="size-4" />
-          </button>
-        </div>
-      </div>
-
-      {open && (
-        <div
-          className="fixed inset-0 z-[80] flex items-end justify-center bg-black/70"
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="install-guide-title"
-          onClick={() => setOpen(false)}
+    <div className="border-b border-primary/40 bg-primary px-4 py-3">
+      <div className="mx-auto flex max-w-6xl flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
+        <p className="flex-1 text-sm font-medium text-primary-foreground">
+          Instale o OnWatch no celular — ícone na tela inicial, abre como app.
+        </p>
+        <button
+          type="button"
+          disabled={busy}
+          className="inline-flex h-12 w-full shrink-0 cursor-pointer items-center justify-center gap-2 rounded-lg bg-background px-5 text-sm font-bold uppercase text-foreground shadow active:scale-[0.98] disabled:opacity-70 sm:w-auto sm:min-w-[200px]"
+          onClick={(e: MouseEvent) => {
+            e.preventDefault();
+            void runInstall(setBusy);
+          }}
         >
-          <div
-            className="w-full max-w-lg rounded-t-2xl border border-border bg-background p-5 pb-[calc(1.25rem+env(safe-area-inset-bottom))] shadow-xl"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="mx-auto mb-3 h-1 w-10 rounded-full bg-muted" />
-            <div className="flex items-center gap-2">
-              <span className="grid size-10 place-items-center rounded-md bg-primary/15 text-primary">
-                <Smartphone className="size-5" />
-              </span>
-              <div>
-                <h2 id="install-guide-title" className="text-lg font-semibold">
-                  Instalar app
-                </h2>
-                <p className="text-sm text-muted-foreground">Ícone na tela inicial, sem navegador</p>
-              </div>
-            </div>
+          <Download className="size-5" />
+          {busy ? "Instalando…" : "Instalar app"}
+        </button>
+      </div>
+    </div>
+  );
+}
 
-            <ol className="mt-4 list-decimal space-y-2.5 pl-5 text-sm text-foreground">
-              {isIosDevice() ? (
-                <>
-                  <li>
-                    Abra este site no <strong>Safari</strong>.
-                  </li>
-                  <li>
-                    No Safari, toque no ícone do sistema (quadrado com seta para cima).
-                  </li>
-                  <li>
-                    Escolha <strong>Adicionar à Tela de Início</strong> → <strong>Adicionar</strong>.
-                  </li>
-                </>
-              ) : isAndroidDevice() ? (
-                <>
-                  <li>
-                    Toque em <strong>⋮</strong> no canto superior direito do Chrome.
-                  </li>
-                  <li>
-                    Toque em <strong>Instalar app</strong> — <em>não</em> em Compartilhar.
-                  </li>
-                  <li>
-                    Confirme — o ícone <strong>OnWatch</strong> aparece na home.
-                  </li>
-                </>
-              ) : (
-                <>
-                  <li>
-                    No menu do navegador, escolha <strong>Instalar app</strong>.
-                  </li>
-                  <li>Abra pelo ícone OnWatch na tela inicial.</li>
-                </>
-              )}
-            </ol>
+/** Botão no header. */
+export function HeaderInstallButton() {
+  const installed = useIsStandalone();
+  const [busy, setBusy] = useState(false);
+  if (installed) return null;
 
-            {!isIosDevice() ? (
-              <button
-                type="button"
-                disabled={busy}
-                className="mt-5 inline-flex h-12 w-full cursor-pointer items-center justify-center gap-2 rounded-md bg-primary text-sm font-semibold text-primary-foreground disabled:opacity-70"
-                onClick={(e) => void onInstallClick(e)}
-              >
-                <Download className="size-4" />
-                {busy ? "Instalando…" : "Instalar app agora"}
-              </button>
-            ) : null}
+  return (
+    <button
+      type="button"
+      disabled={busy}
+      className="ml-auto inline-flex h-10 shrink-0 cursor-pointer items-center gap-1.5 rounded-md bg-primary px-3 text-xs font-bold uppercase text-primary-foreground shadow active:scale-[0.98] disabled:opacity-70"
+      onClick={(e) => {
+        e.preventDefault();
+        void runInstall(setBusy);
+      }}
+    >
+      <Download className="size-4" />
+      {busy ? "…" : "Instalar"}
+    </button>
+  );
+}
 
-            <button
-              type="button"
-              className="mt-2 inline-flex h-11 w-full cursor-pointer items-center justify-center rounded-md text-sm text-muted-foreground"
-              onClick={() => setOpen(false)}
-            >
-              Fechar
-            </button>
-          </div>
-        </div>
-      )}
-    </>
+/** Barra fixa embaixo — sempre, em qualquer tela. */
+export function MobileInstallBar() {
+  const installed = useIsStandalone();
+  const [busy, setBusy] = useState(false);
+  if (installed) return null;
+
+  return (
+    <div className="fixed inset-x-0 bottom-[calc(3.5rem+env(safe-area-inset-bottom))] z-[70] px-3 md:bottom-3">
+      <div className="mx-auto max-w-lg rounded-xl border-2 border-primary bg-background p-2 shadow-2xl">
+        <button
+          type="button"
+          disabled={busy}
+          className="flex h-14 w-full cursor-pointer items-center justify-center gap-2 rounded-lg bg-primary text-base font-bold uppercase tracking-wide text-primary-foreground active:scale-[0.98] disabled:opacity-70"
+          onClick={(e) => {
+            e.preventDefault();
+            void runInstall(setBusy);
+          }}
+        >
+          <Download className="size-5 shrink-0" />
+          {busy ? "Instalando…" : "Instalar app"}
+        </button>
+      </div>
+    </div>
   );
 }
