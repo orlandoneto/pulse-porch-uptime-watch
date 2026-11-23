@@ -6,6 +6,16 @@ Painel PWA para monitorar se seus sites estão no ar. Sem backend: tudo roda no 
 
 **Repositório:** https://github.com/orlandoneto/pulse-porch-uptime-watch
 
+## Telas
+
+| Painel com sites | Área vazia |
+| --- | --- |
+| ![Painel monitorando](docs/screenshots/04-painel-monitorando.png) | ![Painel vazio](docs/screenshots/02-painel-vazio.png) |
+
+| Adicionar e-mail | Adicionar site |
+| --- | --- |
+| ![Adicionar e-mail](docs/screenshots/01-adicionar-email.png) | ![Adicionar site](docs/screenshots/03-adicionar-site.png) |
+
 ## O que faz
 
 - Adiciona URLs e verifica de tempos em tempos (ex.: a cada 1 minuto)
