@@ -1,26 +1,80 @@
-# Pulse Porch Uptime Watch
+# OnWatch — Monitor de sites
 
-Quero uma dash board profissional que monitores os meus siotes se estao no ar e eu posso adicionar a url e ira checar se tempo em tmepos se esta no ar se nao diparare um aviso via email ou push, quero via PWA tbm porque irei instalar no meu celular como app e e quero divisao de servico por perfil ex: ao adicionar um email, o email x só ira ver aqueles serevisos que estao no ar assim por diante. bem simples e sem backend tudo no licnete
+Painel PWA para monitorar se seus sites estão no ar. Sem backend: tudo roda no navegador (ou no app instalado). Áreas separadas por e-mail; avisos por notificação e, opcionalmente, por e-mail (EmailJS).
 
-This project was built with [Lovable](https://lovable.dev).
+**App ao vivo:** https://pulse-porch-uptime-watch.orlandoneto.workers.dev
 
-**Live app**: https://pulse-porch-uptime-watch.lovable.app
+**Repositório:** https://github.com/orlandoneto/pulse-porch-uptime-watch
 
-## Build with Lovable
+## O que faz
 
-Continue developing this project in the [Lovable editor](https://lovable.dev/projects/214cb494-6c9f-4c96-b311-054464e08e04).
+- Adiciona URLs e verifica de tempos em tempos (ex.: a cada 1 minuto)
+- Mostra status (no ar / fora do ar), latência e disponibilidade
+- Áreas por e-mail: cada perfil só vê os próprios sites
+- Notificações no aparelho quando um site cai ou volta
+- Avisos por e-mail via [EmailJS](https://www.emailjs.com) (opcional, free tier)
+- Instala como app (PWA) no celular e no desktop
 
-- **Ship faster**: describe what you want to build and Lovable handles the code.
-- **Stay in sync**: every change made in Lovable is committed straight to this repository.
-- **Full ownership**: this code is yours. Push to `main` on GitHub and your changes sync back into Lovable, ready for your next prompt.
+## Instalar como app
 
-## Development
+### Android (Chrome)
 
-Prefer working locally? You need Node.js and npm — [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating).
+1. Abra o [app ao vivo](https://pulse-porch-uptime-watch.orlandoneto.workers.dev) no Chrome  
+2. Menu **⋮** → **Instalar app** (ou **Adicionar à tela inicial**)  
+3. Ou use o banner **Instalar** / a seção em **Ajustes**
+
+### iPhone (Safari)
+
+1. Abra o link no **Safari** (não no Chrome)  
+2. **Compartilhar** → **Adicionar à Tela de Início** → **Adicionar**
+
+### Desktop (Chrome / Edge)
+
+Menu do navegador → **Instalar OnWatch** / ícone de instalação na barra de endereço.
+
+## Uso rápido
+
+1. Crie uma área com seu e-mail (**+ E-mail**)  
+2. **Adicionar site** com a URL e o intervalo de verificação  
+3. Em **Ajustes**, ative notificações (e configure EmailJS se quiser e-mail)
+
+## Desenvolvimento local
+
+Node.js 20+ e npm:
 
 ```sh
-git clone <this-repository-url>
-cd <repository-name>
+git clone git@github.com:orlandoneto/pulse-porch-uptime-watch.git
+cd pulse-porch-uptime-watch
 npm i
 npm run dev
 ```
+
+Outros scripts:
+
+| Comando | Função |
+|--------|--------|
+| `npm run build` | Build de produção |
+| `npm test` | Testes (Vitest) |
+| `npm run cf:build` | Build para Cloudflare Workers |
+| `npm run cf:deploy` | Deploy no Worker (após o build) |
+
+## Deploy (Cloudflare)
+
+```sh
+npm run cf:build
+# ajustar o name em .output/server/wrangler.json se necessário
+npx wrangler deploy --config .output/server/wrangler.json
+```
+
+Worker publicado: `pulse-porch-uptime-watch` na conta Cloudflare do `orlandoneto`.
+
+## Stack
+
+- Vite + TanStack Start / React  
+- Cloudflare Workers (Nitro)  
+- PWA (`manifest.webmanifest` + service worker `notify-sw.js`)  
+- Estado e checagens no cliente (localStorage)
+
+## Licença
+
+Uso privado / interno da ON Tech, salvo indicação contrária no repositório.
