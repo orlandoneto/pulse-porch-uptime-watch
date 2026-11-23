@@ -170,7 +170,15 @@ function SettingsPage() {
         ) : (
           <div className="space-y-4">
             {canInstall ? (
-              <Button size="sm" onClick={() => void promptInstall()}>
+              <Button
+                size="sm"
+                onClick={async () => {
+                  const r = await promptInstall();
+                  if (r === "accepted") toast.success("App instalado — abra pelo ícone");
+                  else if (r === "dismissed") toast.message("Instalação cancelada");
+                  else toast.error("Não foi possível instalar agora");
+                }}
+              >
                 Instalar OnWatch
               </Button>
             ) : null}
