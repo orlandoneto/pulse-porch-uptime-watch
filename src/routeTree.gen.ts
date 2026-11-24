@@ -11,6 +11,8 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AjustesRouteImport } from './routes/ajustes'
+import { Route as UsoRouteImport } from './routes/uso'
+import { Route as ApiUsageRouteImport } from './routes/api/usage'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -22,31 +24,49 @@ const AjustesRoute = AjustesRouteImport.update({
   path: '/ajustes',
   getParentRoute: () => rootRouteImport,
 } as any)
+const UsoRoute = UsoRouteImport.update({
+  id: '/uso',
+  path: '/uso',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiUsageRoute = ApiUsageRouteImport.update({
+  id: '/api/usage',
+  path: '/api/usage',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/ajustes': typeof AjustesRoute
+  '/uso': typeof UsoRoute
+  '/api/usage': typeof ApiUsageRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/ajustes': typeof AjustesRoute
+  '/uso': typeof UsoRoute
+  '/api/usage': typeof ApiUsageRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/ajustes': typeof AjustesRoute
+  '/uso': typeof UsoRoute
+  '/api/usage': typeof ApiUsageRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/ajustes'
+  fullPaths: '/' | '/ajustes' | '/uso' | '/api/usage'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/ajustes'
-  id: '__root__' | '/' | '/ajustes'
+  to: '/' | '/ajustes' | '/uso' | '/api/usage'
+  id: '__root__' | '/' | '/ajustes' | '/uso' | '/api/usage'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AjustesRoute: typeof AjustesRoute
+  UsoRoute: typeof UsoRoute
+  ApiUsageRoute: typeof ApiUsageRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -65,12 +85,28 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AjustesRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/uso': {
+      id: '/uso'
+      path: '/uso'
+      fullPath: '/uso'
+      preLoaderRoute: typeof UsoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/usage': {
+      id: '/api/usage'
+      path: '/api/usage'
+      fullPath: '/api/usage'
+      preLoaderRoute: typeof ApiUsageRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AjustesRoute: AjustesRoute,
+  UsoRoute: UsoRoute,
+  ApiUsageRoute: ApiUsageRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

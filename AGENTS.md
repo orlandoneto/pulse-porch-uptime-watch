@@ -36,3 +36,11 @@ use the editor.
 - Visibility/alert rules live as pure functions in `src/lib/monitor/logic.ts` (covered by `src/test/monitor-logic.test.ts`): each email "area" (Profile) owns its services via `ownerId`; no login, no roles.
 - Email alerts go through EmailJS's browser REST API with keys stored in settings, since there is no server to hold secrets.
 - `public/notify-sw.js` is a notification-only service worker (no fetch handler, no caching), registered only in published builds via `src/lib/monitor/sw-register.ts`; mobile browsers need a SW registration to show notifications.
+
+## Módulo de uso / cotas (exceção no servidor)
+
+- `/uso` e `GET /api/usage` (`src/routes/uso.tsx`, `src/routes/api/usage.ts`, `src/lib/usage/*.server.ts`) são a **única** parte que roda no servidor. Isso é necessário porque tokens de API não podem ir para o navegador e o `no-cors` não enxerga status 200/301.
+- O uptime de sites continua **somente no cliente**. Não migre `src/lib/monitor/*` para o servidor sem um pedido explícito.
+- Tokens ficam apenas em `.dev.vars` (gitignored) ou em secrets do Worker; nunca use `VITE_*` com segredo. Só os nomes das variáveis aparecem em `.dev.vars.example`, no README e no relatório.
+- Limiares em `src/lib/usage/thresholds.ts`: `<70%` ok, `>=70%` atenção, `>=90%` crítico. Testes em `src/test/usage-*.test.ts`.
+- As consultas aos provedores têm cache curto (15 s) porque o próprio OnWatch consome a cota de 100.000 requests/dia do Cloudflare. Cron é apenas esboço futuro; este módulo não faz deploy, DNS nem altera billing.

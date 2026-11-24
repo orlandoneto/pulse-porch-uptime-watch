@@ -1,5 +1,14 @@
-import { Link } from "@tanstack/react-router";
-import { LayoutGrid, MoreHorizontal, Pencil, Plus, Settings2, Trash2, Upload } from "lucide-react";
+import { Link, useRouterState } from "@tanstack/react-router";
+import {
+  Gauge,
+  LayoutGrid,
+  MoreHorizontal,
+  Pencil,
+  Plus,
+  Settings2,
+  Trash2,
+  Upload,
+} from "lucide-react";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -23,6 +32,7 @@ export function AppGate({ children }: { children: ReactNode }) {
   const hydrated = useHydrated();
   const state = useAppState();
   const me = useCurrentProfile();
+  const pathname = useRouterState({ select: (router) => router.location.pathname });
   const firstId = state.profiles[0]?.id;
 
   useEffect(() => {
@@ -37,7 +47,9 @@ export function AppGate({ children }: { children: ReactNode }) {
     <div className="min-h-screen pb-40 md:pb-28">
       <Header />
       <InstallTopBanner />
-      <main className="mx-auto max-w-6xl px-4 pt-6 sm:px-6">{noAreas ? <NoAreas /> : children}</main>
+      <main className="mx-auto max-w-6xl px-4 pt-6 sm:px-6">
+        {noAreas && pathname !== "/uso" ? <NoAreas /> : children}
+      </main>
       <MobileInstallBar />
       <MobileNav />
     </div>
@@ -53,6 +65,7 @@ function Header() {
         </Link>
         <nav className="hidden items-center gap-1 md:flex">
           <NavLink to="/" icon={<LayoutGrid />} label="Painel" />
+          <NavLink to="/uso" icon={<Gauge />} label="Uso" />
           <NavLink to="/ajustes" icon={<Settings2 />} label="Ajustes" />
         </nav>
         <HeaderInstallButton />
@@ -139,7 +152,15 @@ function AreaBar() {
   );
 }
 
-function NavLink({ to, icon, label }: { to: "/" | "/ajustes"; icon: ReactNode; label: string }) {
+function NavLink({
+  to,
+  icon,
+  label,
+}: {
+  to: "/" | "/ajustes" | "/uso";
+  icon: ReactNode;
+  label: string;
+}) {
   return (
     <Link
       to={to}
@@ -155,11 +176,12 @@ function NavLink({ to, icon, label }: { to: "/" | "/ajustes"; icon: ReactNode; l
 function MobileNav() {
   const items = [
     { to: "/" as const, icon: <LayoutGrid />, label: "Painel" },
+    { to: "/uso" as const, icon: <Gauge />, label: "Uso" },
     { to: "/ajustes" as const, icon: <Settings2 />, label: "Ajustes" },
   ];
   return (
     <nav className="fixed inset-x-0 bottom-0 z-30 border-t border-border bg-background/95 pb-[env(safe-area-inset-bottom)] backdrop-blur md:hidden">
-      <div className="grid grid-cols-2">
+      <div className="grid grid-cols-3">
         {items.map((i) => (
           <Link
             key={i.to}

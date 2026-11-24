@@ -48,6 +48,45 @@ Menu do navegador → **Instalar OnWatch** / ícone de instalação na barra de 
 2. **Adicionar site** com a URL e o intervalo de verificação  
 3. Em **Ajustes**, ative notificações (e configure EmailJS se quiser e-mail)
 
+## Uso / Cotas (`/uso`)
+
+Tela para acompanhar as cotas **free** antes de estourar:
+
+- **Cloudflare Workers**: 100.000 requests/dia somando todos os Workers (reset 00:00 UTC), com breakdown por Worker.
+- **Vercel Hobby**: Fast Origin Transfer, Fast Data Transfer, CDN requests, ISR writes, storage, Fluid Active CPU e invocations (janela de 30 dias), além de projetos e deploys.
+- **Render**: serviços e ping da API VenomID; horas/bandwidth do free tier não são publicados pela API.
+- **Checagens HTTP** feitas pelo servidor, com status real (o apex `ongraph.com.br` precisa dar **301**).
+
+Limiares: **< 70%** ok, **>= 70%** atenção, **>= 90%** crítico.
+
+> O uptime de sites continua **somente no cliente** (`localStorage` + `no-cors`). Este módulo é a exceção documentada: ele precisa de servidor porque tokens não podem ir para o navegador e o `no-cors` não enxerga 200/301. Os tokens ficam apenas em `.dev.vars` local ou em secrets do Worker.
+
+### Rodar local
+
+```sh
+cd C:\projetos\pulse-porch-uptime-watch
+npm i
+copy .dev.vars.example .dev.vars   # PowerShell: Copy-Item
+# cole os tokens no .dev.vars (ele é gitignored)
+npm run dev
+# abra http://localhost:8080/uso
+```
+
+Variáveis (nomes e escopos; valores nunca vão para o repositório):
+
+| Variável | Escopo |
+| --- | --- |
+| `CLOUDFLARE_API_TOKEN` | somente leitura — Account Analytics: Read |
+| `CLOUDFLARE_ACCOUNT_ID` | id da conta (já vem preenchido no exemplo) |
+| `VERCEL_TOKEN` | somente leitura — time `orlandonetos-projects` |
+| `VERCEL_TEAM_ID` | id do time (já vem preenchido no exemplo) |
+| `RENDER_API_KEY` | opcional, somente leitura |
+| `USAGE_DASHBOARD_KEY` | opcional; se definido, `GET /api/usage` exige o header `x-usage-key` |
+
+A API fica em `GET /api/usage` e devolve o JSON agregado. A tela usa uma server function com cache curto (15 s) para não gastar a cota do próprio Worker.
+
+**Nenhum deploy é feito por este módulo.** O cron futuro é só um esboço; a consulta ao vivo no carregamento da página basta no v1.
+
 ## Desenvolvimento local
 
 Node.js 20+ e npm:

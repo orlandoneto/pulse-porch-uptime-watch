@@ -1,0 +1,17 @@
+# Copie este arquivo para `.dev.vars` (que está no .gitignore) e cole os tokens.
+# NUNCA commite o .dev.vars nem valores reais aqui.
+#
+# Cloudflare: token somente leitura com Account -> Account Analytics: Read.
+CLOUDFLARE_API_TOKEN=cf_token_aqui
+# Account id do Orlando (não é segredo; já vem preenchido).
+CLOUDFLARE_ACCOUNT_ID=656b85e95fc91fd706694e2ad9411af7
+
+# Vercel: token somente leitura do time orlandonetos-projects (sem deploy).
+VERCEL_TOKEN=vercel_token_aqui
+VERCEL_TEAM_ID=team_8hfXyjRokDDYZINiTRPMpw6K
+
+# Opcional: Render API key somente leitura (horas/bandwidth não são expostos).
+RENDER_API_KEY=render_token_aqui
+
+# Opcional: se definido, GET /api/usage exige o header `x-usage-key` com este valor.
+# USAGE_DASHBOARD_KEY=
