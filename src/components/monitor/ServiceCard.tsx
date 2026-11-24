@@ -48,22 +48,25 @@ export function ServiceCard({ service, runtime, now, onEdit }: Props) {
         status === "down" && "glow-down border-destructive/40",
       )}
     >
-      <header className="flex items-start gap-3">
+      <header className="flex items-start gap-2">
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
             <h3 className="truncate font-semibold text-foreground">{service.name}</h3>
           </div>
+          <p className="mt-0.5 truncate font-mono text-xs text-muted-foreground">{host}</p>
+        </div>
+        <StatusPill status={status} />
+        <Button variant="ghost" size="icon" className="-mt-1 size-8 shrink-0" asChild>
           <a
             href={service.url}
             target="_blank"
-            rel="noreferrer"
-            className="mt-0.5 inline-flex max-w-full items-center gap-1 font-mono text-xs text-muted-foreground hover:text-foreground"
+            rel="noopener noreferrer"
+            aria-label={`Abrir ${service.name} em nova aba`}
+            title="Abrir site"
           >
-            <span className="truncate">{host}</span>
-            <ExternalLink className="size-3 shrink-0" />
+            <ExternalLink className="size-4" />
           </a>
-        </div>
-        <StatusPill status={status} />
+        </Button>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" size="icon" className="-mr-2 -mt-1 size-8" aria-label="Ações do site">
